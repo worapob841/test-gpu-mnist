@@ -1,12 +1,12 @@
 # MNIST Transfer Learning
 
-Transfer learning on MNIST using ResNet18 pretrained on ImageNet.
+Transfer learning on MNIST using ViT-Large (Vision Transformer) pretrained on ImageNet.
 
 ## Usage
 
 ### Local Training
 ```bash
-python transfer_learning_mnist.py --epochs 10 --batch_size 64
+python transfer_learning_mnist.py --epochs 10 --batch_size 32
 ```
 
 ### SLURM Cluster

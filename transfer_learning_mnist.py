@@ -10,15 +10,19 @@ import time
 
 def get_transforms():
     train_transform = transforms.Compose([
+        transforms.Resize((224, 224)),
         transforms.RandomRotation(15),
         transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),
+        transforms.Grayscale(num_output_channels=3),
         transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     
     val_transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.Grayscale(num_output_channels=3),
         transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     
     return train_transform, val_transform
@@ -65,12 +69,10 @@ def load_data(data_dir, batch_size, train_samples=10000):
     return train_loader, val_loader
 
 def create_model(num_classes=10):
-    model = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+    model = models.vit_l_16(weights=models.ViT_L_16_Weights.IMAGENET1K_V1)
     
-    model.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-    
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, num_classes)
+    num_ftrs = model.heads.head.in_features
+    model.heads.head = nn.Linear(num_ftrs, num_classes)
     
     return model
 
@@ -149,7 +151,7 @@ def main():
     train_loader, val_loader = load_data(args.data_dir, args.batch_size, args.train_samples)
     print(f"Train samples: {len(train_loader.dataset)}, Val samples: {len(val_loader.dataset)}")
     
-    print("Creating model with transfer learning from ResNet18...")
+    print("Creating model with transfer learning from ViT-L/16...")
     model = create_model(num_classes=10).to(device)
     
     criterion = nn.CrossEntropyLoss()
