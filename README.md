@@ -27,6 +27,9 @@ sbatch train_mnist.sbatch
 
 ## Requirements
 
-- PyTorch
-- torchvision
-- tqdm
+- Create virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
