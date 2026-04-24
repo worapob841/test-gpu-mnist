@@ -8,6 +8,14 @@ import argparse
 import os
 import time
 
+def get_device():
+    if torch.backends.mps.is_available():
+        return torch.device('mps')
+    elif torch.cuda.is_available():
+        return torch.device('cuda')
+    else:
+        return torch.device('cpu')
+
 def get_transforms():
     train_transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -27,7 +35,7 @@ def get_transforms():
     
     return train_transform, val_transform
 
-def load_data(data_dir, batch_size, train_samples=10000):
+def load_data(data_dir, batch_size, train_samples=10000, device=None):
     train_transform, val_transform = get_transforms()
     
     full_train_dataset = datasets.MNIST(
@@ -50,12 +58,14 @@ def load_data(data_dir, batch_size, train_samples=10000):
         download=True
     )
     
+    use_pin_memory = device is not None and device.type in ('cuda', 'mps')
+    
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=2,
-        pin_memory=True
+        pin_memory=use_pin_memory
     )
     
     val_loader = DataLoader(
@@ -63,7 +73,7 @@ def load_data(data_dir, batch_size, train_samples=10000):
         batch_size=batch_size,
         shuffle=False,
         num_workers=2,
-        pin_memory=True
+        pin_memory=use_pin_memory
     )
     
     return train_loader, val_loader
@@ -142,13 +152,13 @@ def main():
     parser.add_argument('--save_dir', type=str, default='./checkpoints', help='Directory to save model')
     args = parser.parse_args()
     
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
     print(f"Using device: {device}")
     
     os.makedirs(args.save_dir, exist_ok=True)
     
     print(f"Loading data from {args.data_dir}...")
-    train_loader, val_loader = load_data(args.data_dir, args.batch_size, args.train_samples)
+    train_loader, val_loader = load_data(args.data_dir, args.batch_size, args.train_samples, device)
     print(f"Train samples: {len(train_loader.dataset)}, Val samples: {len(val_loader.dataset)}")
     
     print("Creating model with transfer learning from ViT-L/16...")
